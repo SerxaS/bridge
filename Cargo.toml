@@ -9,4 +9,3 @@ hex = { version = "0.4", default-features = false, features = ["alloc"] }
 num-bigint = "0.4.5"
 num-traits = "0.2.19"
 halo2curves = "0.6.1"
-
