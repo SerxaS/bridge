@@ -20,7 +20,7 @@ struct SemaphoreTransactions {
 }
 
 impl SemaphoreTransactions {
-    pub fn new() -> Self {
+    pub fn transaction() -> Self {
         let rpc = ConfigIface::get_config().rpc_url;
 
         let hss_adress = ConfigIface::get_config().hss_address;

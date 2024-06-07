@@ -1,2 +1,3 @@
+mod crypto_tests;
 mod middleware;
-mod tests;
+mod contract_tests;
