@@ -1,44 +1,59 @@
-use std::str::FromStr;
-
-use web3::{
-    ethabi::ethereum_types::U256,
-    signing::SecretKey,
-    types::{Address, TransactionParameters},
+use crate::middleware::config::ConfigIface;
+use alloy::{
+    contract::{ContractInstance, Interface},
+    json_abi::JsonAbi,
+    primitives::Address,
 };
 
-/// Below generates and signs a transaction offline, before transmitting it to a public node (eg Infura)
-#[tokio::main]
-async fn main() -> web3::Result {
-    let transport = web3::transports::Http::new(
-        "https://rinkeby.infura.io/v3/XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    )?;
-    let web3 = web3::Web3::new(transport);
+/// Struct for on-chain interactions with deployed contracts.
+/// A valid web3 account with signer must be passed into contract interaction functions.
+/// Solely intended for use by SemaphoreAccount in account.
+struct SemaphoreTransactions {
+    //HSS smart contract ABI.
+    hss_abi: JsonAbi,
+    //HSS smart contract address.
+    hss_adress: String,
+    //Web3 lib HSS contract object.
+    hss_contract: ContractInstance<Address, String, Interface>,
+    //RPC address used for smart contract interaction.
+    rpc: String,
+}
 
-    // Insert the 20-byte "to" address in hex format (prefix with 0x)
-    let to = Address::from_str("0xXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX").unwrap();
+impl SemaphoreTransactions {
+    pub fn new() -> Self {
+        let rpc = ConfigIface::get_config().rpc_url;
 
-    // Insert the 32-byte private key in hex format (do NOT prefix with 0x)
-    let prvk =
-        SecretKey::from_str("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX")
-            .unwrap();
+        let hss_adress = ConfigIface::get_config().hss_address;
 
-    // Build the tx object
-    let tx_object = TransactionParameters {
-        to: Some(to),
-        value: U256::exp10(17), //0.1 eth
-        ..Default::default()
-    };
+        let adress_from_json = ConfigIface::get_config().hss_address;
+        let address = Address::parse_checksummed(adress_from_json, None)
+            .expect("The length of the address was given incorrect!");
 
-    // Sign the tx (can be done offline)
-    let signed = web3.accounts().sign_transaction(tx_object, &prvk).await?;
+        let provider = ConfigIface::get_config().rpc_url;
 
-    // Send the tx to infura
-    let result = web3
-        .eth()
-        .send_raw_transaction(signed.raw_transaction)
-        .await?;
+        // TODO: Check abi data inside semaphore!!!
+        // Open config file and parse JSON.
+        let hss_abi_path = "src/middleware/artifacts/Abi.json";
+        let hss_abi_str = std::fs::read_to_string(hss_abi_path)
+            .expect("Could not open the file. Please provide a Abi.json in `artifacts` directory.");
+        let hss_abi: JsonAbi = serde_json::from_str(&hss_abi_str)
+            .expect("JSON was not well-formatted! Unable to read the data!");
 
-    println!("Tx succeeded with hash: {}", result);
+        let interface = Interface::new(hss_abi.clone());
 
-    Ok(())
+        let hss_contract: ContractInstance<Address, String, Interface> =
+            ContractInstance::new(address, provider, interface);
+
+        Self {
+            hss_abi,
+            hss_adress,
+            hss_contract,
+            rpc,
+        }
+    }
+
+    // /// Adds subscriber and their uncompressed public key to the HSS contract storage.
+    // fn add_sub_and_key(web3_account: String, uncompressed_pub_key: String) -> String {
+
+    // }
 }

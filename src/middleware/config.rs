@@ -2,7 +2,7 @@ use serde_derive::Deserialize;
 use serde_json;
 use std::{fs::File, io::Read};
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct ConfigIface {
     pub(crate) rpc_url: String,
     pub(crate) hss_address: String,

@@ -1,17 +1,17 @@
 #[cfg(test)]
 mod tests {
+    use std::str::FromStr;
+
     use crate::middleware::{
         config::ConfigIface,
         crypto::{CryptoUtils, PubKey},
     };
-    use secp256k1::{PublicKey, SecretKey};
-    use std::{fs::File, io::BufReader, str::FromStr};
-    use web3::{
-        api::{Eth, Namespace},
-        ethabi::Contract,
-        signing,
-        types::H160,
+    use alloy::{
+        contract::{ContractInstance, Interface},
+        json_abi::JsonAbi,
+        primitives::{keccak256, Address},
     };
+    use secp256k1::{PublicKey, SecretKey};
 
     // Answers
     // TODO: Should be 04 at the beginning of correct uncompressed pub key!!
@@ -25,17 +25,24 @@ mod tests {
         // TODO: Different from Python!!!!!!!!!! I created new abi file! Should i add comment to them?
         // TODO: What is "a" variable = true?
         // TODO: There is lamda function at decompress pubkey func why?
+
+        let adress_from_json = ConfigIface::get_config().hss_address;
+        let address = Address::parse_checksummed(adress_from_json, None)
+            .expect("The length of the address was given incorrect!");
+
+        let provider = ConfigIface::get_config().rpc_url;
+
         // Open config file and parse JSON.
-        let hss_file = File::open("src/middleware/artifacts/Abi.json")
-            .expect("Could not open the file. Please provide a Abi.json in `artifacts` directory.");
-        let hss_abi_reader = BufReader::new(hss_file);
-        let hss_abi_contract =
-            Contract::load(hss_abi_reader).expect("JSON was not well-formatted!");
-        let transport_url =
-            web3::transports::Http::new(&ConfigIface::get_config().rpc_url).unwrap();
-        let eth = Eth::new(&transport_url);
-        let hss_adress_h160 = H160::from_str(&ConfigIface::get_config().hss_address).unwrap();
-        let hss_contract = web3::contract::Contract::new(eth, hss_adress_h160, hss_abi_contract);
+        let abi_path = "src/middleware/artifacts/Abi.json";
+        let abi_str = std::fs::read_to_string(abi_path)
+            .expect("Could not open the file. Please provide a SemaphoreNetworkHSS.json in `artifacts` directory.");
+        let abi_data: JsonAbi = serde_json::from_str(&abi_str)
+            .expect("JSON was not well-formatted! Unable to read the data!");
+
+        let interface = Interface::new(abi_data.clone());
+
+        let contract: ContractInstance<Address, String, Interface> =
+            ContractInstance::new(address, provider, interface);
 
         // TODO: Changed name of variables. Different from python. Check!!
         let priv_key_from_file = ConfigIface::get_config().private_key;
@@ -53,7 +60,7 @@ mod tests {
         let mut uncomp_pub_key_byte = uncomp_pub_key_byte_04.to_vec();
         uncomp_pub_key_byte.remove(0);
 
-        let hashed_uncomp_pub_key_byte = signing::keccak256(&uncomp_pub_key_byte);
+        let hashed_uncomp_pub_key_byte = keccak256(&uncomp_pub_key_byte);
         let hashed_uncomp_pub_key_without_prefix = hex::encode(hashed_uncomp_pub_key_byte);
         let hashed_uncomp_pub_key = CryptoUtils::add_prefix(&hashed_uncomp_pub_key_without_prefix);
 
