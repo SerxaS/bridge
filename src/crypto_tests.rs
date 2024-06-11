@@ -35,7 +35,7 @@ mod tests {
         // Open config file and parse JSON.
         let abi_path = "src/middleware/artifacts/Abi.json";
         let abi_str = std::fs::read_to_string(abi_path)
-            .expect("Could not open the file. Please provide a SemaphoreNetworkHSS.json in `artifacts` directory.");
+            .expect("Could not open the file. Please provide SemaphoreNetworkHSS.json in `artifacts` directory.");
         let abi_data: JsonAbi = serde_json::from_str(&abi_str)
             .expect("JSON was not well-formatted! Unable to read the data!");
 
@@ -108,8 +108,9 @@ mod tests {
 
         let comp_pub_key = CryptoUtils::compress(pub_key);
         println!("Compressed Public Key: {:?}", comp_pub_key);
-        let decomp_pub_key = CryptoUtils::decompress_public_key(comp_pub_key);
+
         // TODO added 04 prefix. If not need delete!!
+        let decomp_pub_key = CryptoUtils::decompress_public_key(comp_pub_key);
         println!("Decompressed Public Key: {:?}", decomp_pub_key);
     }
 }
