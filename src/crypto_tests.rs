@@ -1,7 +1,5 @@
 #[cfg(test)]
 mod tests {
-    use std::str::FromStr;
-
     use crate::middleware::{
         config::ConfigIface,
         crypto::{CryptoUtils, PubKey},
@@ -12,6 +10,7 @@ mod tests {
         primitives::{keccak256, Address},
     };
     use secp256k1::{PublicKey, SecretKey};
+    use std::str::FromStr;
 
     // Answers
     // TODO: Should be 04 at the beginning of correct uncompressed pub key!!

@@ -1,8 +1,9 @@
+use alloy::signers::wallet::LocalWallet;
 use hex;
 use num_bigint::{BigInt, BigUint};
 use num_traits::Num;
 use prefix_hex::ToHexPrefixed;
-use secp256k1::{ecdh::SharedSecret, All, PublicKey, Secp256k1, SecretKey};
+use secp256k1::{All, PublicKey, Secp256k1, SecretKey};
 use std::str::FromStr;
 
 pub struct PubKey {
@@ -18,7 +19,7 @@ impl PubKey {
 
 /// secp256k1 curve.
 pub struct CryptoUtils {
-    curve: Secp256k1<All>,
+    pub(crate) curve: Secp256k1<All>,
 }
 
 impl CryptoUtils {
@@ -59,11 +60,8 @@ impl CryptoUtils {
     /// Chop 0x prefix from key and convert it from hex to base10.
     pub fn key_to_base_ten(key: String) -> BigUint {
         let key_without_prefix = CryptoUtils::remove_prefix(key);
-        let key_to_base_ten = BigUint::from_str_radix(&key_without_prefix, 16)
-            .unwrap()
-            .to_string()
-            .parse()
-            .unwrap();
+        let key_to_base_ten =
+            BigUint::from_str_radix(&key_without_prefix, 16).expect("The Key has invalid form!");
 
         key_to_base_ten
     }
@@ -78,10 +76,14 @@ impl CryptoUtils {
         comp_pub_key
     }
 
-    /// TODO: Different from Python. Crate has own shared secret!
     /// Helper function to retrieves shared secret.
-    pub fn gen_shared_secret(pub_key: PublicKey, priv_key: SecretKey) -> SharedSecret {
-        let shared_secret = SharedSecret::new(&pub_key, &priv_key);
+    pub fn gen_shared_secret(&self, web3_account: Box<LocalWallet>, pub_key: String) -> BigUint {
+        let account_priv_key_str = LocalWallet::to_bytes(&web3_account).to_string();
+        let account_priv_key_base_ten = CryptoUtils::key_to_base_ten(account_priv_key_str);
+
+        let pub_key_base_ten = CryptoUtils::key_to_base_ten(pub_key);
+
+        let shared_secret = account_priv_key_base_ten * pub_key_base_ten;
 
         shared_secret
     }

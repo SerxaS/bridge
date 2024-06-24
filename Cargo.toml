@@ -3,6 +3,14 @@ name = "semaphore_network_hss_bridge_srs"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
+
 [dependencies]
 rand = "0.8"
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
@@ -13,9 +21,9 @@ serde_json = "1.0.117"
 serde_derive = "1.0.203"
 secp256k1 = "0.29.0"
 prefix-hex = "0.7.1"
-tokio = "1.38.0"
+tokio = {version = "1.38.0", features = ["full"] }
 eyre = "0.6.12"
-alloy = { git = "https://github.com/alloy-rs/alloy", version = "0.1.0", features = [
+alloy = { git = "https://github.com/alloy-rs/alloy", rev = "dc56a76", features = [
     "consensus",
     "contract",
     "eips",
@@ -40,4 +48,4 @@ alloy = { git = "https://github.com/alloy-rs/alloy", version = "0.1.0", features
     "signer-wallet",
     "signer-yubihsm",
     "signers",
-]}
+] }
