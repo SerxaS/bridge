@@ -21,7 +21,7 @@ impl SemaphoreNetworkAccount {
                 .parse()
                 .expect("The Private Key was given in config.json file has invalid form!");
             // Creates a signer from Private Key. Note that the strings cannot be prefixed with 0x.
-            let web3_account: Option<Box<LocalWallet>> = Some(Box::new(signer));
+            let web3_account = Some(Box::new(signer));
         }
 
         let curve = CryptoUtils::get_curve();
